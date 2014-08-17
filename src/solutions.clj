@@ -111,3 +111,34 @@
         (recur (last fs) 
                (drop-last fs) 
                ((last fs) last-result))))))
+
+(defn check [a-string]
+  (loop [so-far []
+         a-string (seq a-string)]
+    (println (str "a-string: " (apply str a-string)
+                  "\nso-far: " (apply str so-far)))
+    (if (and (empty? a-string) (empty? so-far)) 
+      true
+      (case (first a-string)
+        \( (recur (conj (into [] so-far) \()
+                  (rest a-string))
+        \{ (recur (conj (into [] so-far) \{)
+                   (rest a-string))
+        \[ (recur (conj (into [] so-far) \[)
+                  (rest a-string))
+        \) (if (= (last so-far) \()
+             (recur (drop-last so-far)
+                    (rest a-string))
+             false)
+        \} (if (= (last so-far) \{)
+             (recur (drop-last so-far)
+                     (rest a-string))
+             false)
+        \] (if (= (last so-far) \[)
+             (recur (drop-last so-far)
+                     (rest a-string))
+             false)
+        (if (and (empty? (rest a-string)) 
+                 (not (empty? so-far)))
+          false
+          (recur so-far (rest a-string)))))))
