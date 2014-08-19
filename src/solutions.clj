@@ -142,3 +142,118 @@
                  (not (empty? so-far)))
           false
           (recur so-far (rest a-string)))))))
+
+(defn least-common-multiplier [& nums]
+  (letfn [(gcd [x y]
+            (if (zero? y) x
+               (recur y (mod x y))))]
+    (reduce #(/ (* %1 %2) (gcd %1 %2)) nums)))
+  
+(defn type-identification [coll]
+  (let [str-coll (first (seq (str coll)))]
+    (case str-coll
+      (or \c \() :list
+      \[ :vector
+      \{ :map
+      \# :set
+      nil)))
+    
+(defn reverse-interleave [coll freq]
+  (loop [coll coll
+         so-far '()]
+    (if (or (empty? (rest coll)) (= (count so-far) freq))
+      (reverse so-far)      
+      (recur (rest coll)
+             (conj so-far (keep-indexed #(if (= 0 (mod %1 freq)) 
+                                        %2) 
+                                         coll))))))
+                                       
+(defn rotate-sequence [n coll]
+  (let [from-pos-n (loop [is-pos? (pos? n)
+                     current-n n]
+                (if is-pos?
+                  (if (<= current-n (count coll))
+                    current-n
+                    (- current-n (count coll)))
+                  (let [next-n (+ (count coll) 
+                                  current-n)]
+                    (recur (pos? next-n) next-n))))]
+    (concat (drop from-pos-n coll) (take from-pos-n coll))))
+  
+(defn replicate-sequence [coll n]
+  (reduce #(concat %1 (repeat n %2)) '() coll))
+  
+(defn split-by-type [coll]
+  (reduce (fn [cons-coll current] 
+            (loop [inner-coll (first cons-coll)
+                   outer-coll cons-coll]
+              (println inner-coll)
+              (if (empty? inner-coll) 
+                (conj cons-coll (vector current))
+                (if (some #(= (type current) (type %)) inner-coll)
+                  (assoc cons-coll (.indexOf cons-coll inner-coll) 
+                                   (conj inner-coll current))
+                  (recur (first (rest outer-coll)) (rest outer-coll))))))
+          []
+          coll))
+
+(defn longest-increasing-seq [coll]
+  (reduce 
+    #(if (and (> (count %2) 1) (> (count %2) (count %1))) %2 %1)
+    []
+    (reduce 
+      (fn [cons-coll num]
+        (let [inner-coll (last cons-coll)
+              at-pos (if (nil? inner-coll)
+                       0
+                       (.indexOf cons-coll inner-coll))]
+          (if (= num ((fnil inc num) (last inner-coll)))
+            (assoc cons-coll at-pos (conj inner-coll num))
+            (if (< (count inner-coll) 2)
+              (assoc cons-coll at-pos (vector num))
+              (conj cons-coll (vector num))))))
+      []
+      coll)))
+
+(defn partition-at[freq coll]
+  (loop [so-far [[]]
+         rem-coll coll]
+    (if (empty? rem-coll) 
+      (if (< (count (last so-far)) freq) (drop-last so-far) so-far)
+      (let [current (first rem-coll)
+            last-of-so-far (last so-far)
+            at-pos (.indexOf so-far last-of-so-far)]
+        (if (< (count last-of-so-far) freq)
+          (recur (assoc so-far at-pos (conj last-of-so-far current))
+                 (rest rem-coll))
+          (recur (conj so-far (vector current))
+                 (rest rem-coll)))))))
+               
+(defn find-distinct-items [coll]
+  (reduce
+    (fn [cons-coll current]
+      (if (some #(= % current) cons-coll)
+        cons-coll
+        (conj cons-coll current)))
+    []
+    coll))
+  
+(defn occurence-count [coll]
+  (reduce
+    (fn [cons-coll current]
+      (if (contains? cons-coll current)
+        (update-in cons-coll [current] inc)
+        (assoc cons-coll current 1)))
+    {}
+    coll))
+  
+(defn function-composition [& fs]
+  (fn [& args]
+    (loop [f (last fs)
+           fs (drop-last fs)
+           last-result (apply f args)]
+      (if (empty? fs)
+        last-result
+        (recur (last fs) 
+               (drop-last fs) 
+               ((last fs) last-result))))))
