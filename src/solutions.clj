@@ -246,14 +246,3 @@
         (assoc cons-coll current 1)))
     {}
     coll))
-  
-(defn function-composition [& fs]
-  (fn [& args]
-    (loop [f (last fs)
-           fs (drop-last fs)
-           last-result (apply f args)]
-      (if (empty? fs)
-        last-result
-        (recur (last fs) 
-               (drop-last fs) 
-               ((last fs) last-result))))))
